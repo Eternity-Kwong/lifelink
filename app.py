@@ -5,10 +5,6 @@ app = Flask(__name__)
 
 # Define the dictionary of words and their alternatives
 paraphrasing_dict = {
-    "fuck": {
-        "parent_to_teen": ["beep"]
-        "teen_to_parent": ["beep"]
-    }
     "stupid": {
         "parent_to_teen": ["thoughtless", "misinformed", "not well-thought-out", "silly", "short-sighted", "unfocused", "uninformed"],
         "teen_to_parent": ["misguided", "confused", "disoriented", "not thinking clearly", "illogical", "not considering", "off-track"]
@@ -151,19 +147,22 @@ paraphrasing_dict = {
     },
 }
 
-
 # Function to paraphrase text based on dictionary
-def paraphrase_text(text):
+def paraphrase_text(text, direction):
     words = text.split()
     paraphrased_words = []
     
     for word in words:
-        # If the word is in the dictionary, choose a random alternative
-        if word.lower() in paraphrasing_dict:
-            paraphrased_words.append(random.choice(paraphrasing_dict[word.lower()]))
+        # Check if the word exists in the paraphrasing dictionary
+        word_lower = word.lower()
+        if word_lower in paraphrasing_dict:
+            # Select the appropriate direction (parent_to_teen or teen_to_parent)
+            if direction in paraphrasing_dict[word_lower]:
+                paraphrased_words.append(random.choice(paraphrasing_dict[word_lower][direction]))
+            else:
+                paraphrased_words.append(word)  # If no direction, keep original word
         else:
-            # If the word is not in the dictionary, keep the original word
-            paraphrased_words.append(word)
+            paraphrased_words.append(word)  # If word is not in dictionary, keep original word
     
     # Join the words back into a single string
     return ' '.join(paraphrased_words)
@@ -181,39 +180,44 @@ def home():
         </head>
         <body style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
             <h1>Paraphrasing Tool</h1>
-            <form action="/paraphrase" method="POST" style="margin-bottom: 20px;">
-                <textarea name="text" rows="5" cols="40" placeholder="Enter text to paraphrase" required></textarea><br><br>
-                <button type="submit" style="padding: 10px 20px; font-size: 16px;">Paraphrase</button>
+            <form action="/paraphrase" method="POST">
+                <textarea name="text" placeholder="Enter your text here" rows="4" cols="50"></textarea><br><br>
+                <label for="direction">Select Communication Direction:</label>
+                <select name="direction" id="direction">
+                    <option value="parent_to_teen">Parent to Teen</option>
+                    <option value="teen_to_parent">Teen to Parent</option>
+                </select><br><br>
+                <input type="submit" value="Paraphrase">
             </form>
         </body>
         </html>
     ''')
 
-# Route to handle the paraphrasing logic
+# Route to handle the paraphrasing request
 @app.route('/paraphrase', methods=['POST'])
 def paraphrase():
-    # Get the text from the form submission
-    text = request.form.get('text', '')
-    
-    # Paraphrase the text
-    paraphrased = paraphrase_text(text)
-    
-    # Return the paraphrased text in an HTML response
+    text = request.form['text']
+    direction = request.form['direction']
+    paraphrased_text = paraphrase_text(text, direction)
     return render_template_string('''
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Paraphrased Result</title>
+            <title>Paraphrasing Tool - Result</title>
         </head>
         <body style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
-            <h1>Paraphrased Result</h1>
-            <p style="font-size: 18px;">{{ paraphrased_text }}</p>
-            <a href="/" style="text-decoration: none; color: white; background-color: #007BFF; padding: 10px 20px; border-radius: 5px;">Go Back</a>
+            <h1>Paraphrased Text</h1>
+            <p><strong>Original Text:</strong></p>
+            <p>{{ original_text }}</p>
+            <p><strong>Paraphrased Text:</strong></p>
+            <p>{{ paraphrased_text }}</p>
+            <br>
+            <a href="/">Go Back</a>
         </body>
         </html>
-    ''', paraphrased_text=paraphrased)
+    ''', original_text=text, paraphrased_text=paraphrased_text)
 
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    app.run(debug=True)
