@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lifelink Paraphrase App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+</head>
+<body>
+
+    <button class="switch-button" onclick="toggleView()">Switch to Paraphrase</button>
+
+    <div class="container" id="homeScreen">
+        <h1>Welcome to the Paraphrase App</h1>
+        <p>Click the button above to start paraphrasing text or improving your writing.</p>
+    </div>
+
+    <div class="container" id="paraphraseScreen" style="display: none;">
+        <h2>Paraphrase Text</h2>
+        <textarea id="inputText" placeholder="Enter text to paraphrase..." oninput="updateSuggestions()"></textarea>
+        <button onclick="paraphrase()">Paraphrase</button>
+        <div class="output">
+            <h3>Paraphrased Text:</h3>
+            <p id="outputText">Your paraphrased text will appear here.</p>
+        </div>
+
+        <h2>Improve Text</h2>
+        <textarea id="improveText" placeholder="Enter text to improve..." oninput="updateSuggestions()"></textarea>
+        <div class="output">
+            <h3>Improvement Suggestions:</h3>
+            <p id="improvementText">Your improvement suggestions will appear here.</p>
+        </div>
+    </div>
+
+    <script>
+        // Function to toggle between Home Screen and Paraphrasing Screen
+        function toggleView() {
+            const homeScreen = document.getElementById("homeScreen");
+            const paraphraseScreen = document.getElementById("paraphraseScreen");
+            const button = document.querySelector(".switch-button");
+
+            // Toggle visibility
+            if (homeScreen.style.display === "none") {
+                homeScreen.style.display = "block";
+                paraphraseScreen.style.display = "none";
+                button.textContent = "Switch to Paraphrase";
+            } else {
+                homeScreen.style.display = "none";
+                paraphraseScreen.style.display = "block";
+                button.textContent = "Switch to Home";
+            }
+        }
+
+        // Async function to handle paraphrasing
+        async function paraphrase() {
+            const text = document.getElementById("inputText").value;
+
+            const response = await fetch("/paraphrase", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ text })
+            });
+
+            const data = await response.json();
+            document.getElementById("outputText").textContent = data.paraphrased_text;
+        }
+
+        // Async function to handle improvement suggestions
+        async function updateSuggestions() {
+            const text = document.getElementById("improveText").value;
+
+            const response = await fetch("/improve", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ text })
+            });
+
+            const data = await response.json();
+            document.getElementById("improvementText").textContent = data.improvements;
+        }
+
+        // Add event listener for 'Enter' key on the 'inputText' textarea
+        document.getElementById("inputText").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Prevent new line in textarea
+                paraphrase(); // Call paraphrase function when Enter is pressed
+            }
+        });
+    </script>
+
+</body>
+</html>
